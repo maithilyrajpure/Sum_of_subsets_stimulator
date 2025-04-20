@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Sum of Subsets Virtual Lab</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #fdf6f6;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        nav {
+            background-color: #d36c6c;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .nav-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .nav-item:hover {
+            background-color: #e48282;
+        }
+
+        .nav-item.active {
+            background-color: #b35252;
+            font-weight: bold;
+        }
+
+        .page {
+            display: none;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        header,
+        .input-area,
+        .control-buttons,
+        .auto-play,
+        .status,
+        .legend {
+            padding: 10px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #d36c6c;
+            margin: 10px;
+        }
+
+        .input-area input {
+            padding: 6px;
+            margin: 0 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        .input-area button,
+        .control-buttons button {
+            padding: 6px 12px;
+            border: none;
+            background-color: #f29c9c;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        .control-buttons button {
+            background-color: #65a5f8;
+        }
+
+        .control-buttons button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+
+        h2 {
+            color: #b35252;
+            margin-top: 20px;
+        }
+
+        h3 {
+            color: #b35252;
+        }
+
+        
+
+        #treeContainer {
+            flex: 1;
+            overflow: auto;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+            position: relative;
+            background: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 500px;
+            margin: 20px 0;
+        }
+
+        #treeCanvas {
+            position: relative;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .node {
+            position: absolute;
+            background-color: #ffe1e1;
+            border: 2px solid #f5baba;
+            padding: 8px;
+            border-radius: 10px;
+            min-width: 40px;
+            text-align: center;
+            font-size: 0.85em;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .node-sum {
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .node-subset {
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        .highlight {
+            background-color: #f88;
+            border-color: #ffa5a5;
+            color: white;
+        }
+
+        .highlight .node-subset {
+            color: #fff;
+        }
+
+        .current {
+            background-color: #78e573;
+            border: 2px solid #46a341;
+            transform: translate(-50%, -50%) scale(1.15);
+            z-index: 20;
+        }
+
+        .backtrack {
+            background-color: #ffcc66;
+            border: 2px solid #e6a029;
+        }
+
+        .path {
+            stroke: #65a5f8;
+            stroke-width: 2.5;
+        }
+
+        .backtrack-path {
+            stroke: #ffcc66;
+            stroke-width: 2.5;
+        }
+
+        .edge-label {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 2px 5px;
+            border-radius: 8px;
+            font-size: 0.75em;
+            z-index: 15;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border: 1px solid #ddd;
+        }
+
+        .edge-label.visible {
+            opacity: 1;
+        }
+
+        .status {
+            font-style: italic;
+            font-size: 0.9em;
+            min-height: 2.5em;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            color: #444;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            font-size: 0.8em;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            padding: 3px 8px;
+            background-color: #fff;
+            border-radius: 15px;
+            border: 1px solid #eee;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .auto-play {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .auto-play input {
+            width: 60px;
+            margin: 0 5px;
+        }
+
+        /* Guide Page */
+        .guide-section {
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+
+        .algorithm-box {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+
+        .complexity-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .complexity-table th,
+        .complexity-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .complexity-table th {
+            background-color: #f2f2f2;
+        }
+
+        .quiz-container {
+            max-width: 800px;
+            margin: 20px auto;
+        }
+
+        .quiz-question {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .quiz-options {
+            margin-top: 10px;
+        }
+
+        .quiz-option {
+            margin: 5px 0;
+        }
+
+        .result-correct {
+            color: green;
+            font-weight: bold;
+        }
+
+        .result-incorrect {
+            color: red;
+            font-weight: bold;
+        }
+
+        .answer-explanation {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-left: 3px solid #d36c6c;
+            display: none;
+        }
+
+        .code-block {
+            background-color: #f8f8f8;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .info-box {
+            background-color: #e1f5fe;
+            border-left: 4px solid #03a9f4;
+            padding: 10px 15px;
+            margin: 15px 0;
+            border-radius: 0 5px 5px 0;
+        }
+
+        #quizResults {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f8ff;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .quiz-submit {
+            background-color: #65a5f8;
+            margin-top: 15px;
+        }
+
+        .quiz-progress {
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="nav-container">
+            <div class="nav-item active" data-page="guide">User Guide</div>
+            <div class="nav-item" data-page="simulator">Simulator</div>
+            <div class="nav-item" data-page="quiz">Quiz</div>
+        </div>
+    </nav>
+
+    <!-- Guide Page -->
+    <div id="guidePage" class="page active">
+        <h1>Sum of Subsets Problem - Algorithm Guide</h1>
+
+        <div class="guide-section">
+            <h2>1. Introduction</h2>
+            <p>The Sum of Subsets problem is a classic combinatorial optimization problem in computer science. Given a set of positive integers and a target sum, the goal is to find all subsets of the original set whose elements sum up to the target value.</p>
+            
+            <p>For example, given the set {3, 4, 5} and target sum 9, the solution would be {4, 5} as 4 + 5 = 9.</p>
+            
+            <div class="info-box">
+                <strong>Note:</strong> The Sum of Subsets problem is a specialized case of the more general Subset Sum problem, which only asks if such a subset exists. Sum of Subsets typically requires finding all such subsets.
+            </div>
+        </div>
+
+        <div class="guide-section">
+            <h2>2. Algorithm</h2>
+            <p>We solve this problem using backtracking, a depth-first search technique that builds candidates for the solution incrementally and abandons a candidate ("backtracks") as soon as it determines the candidate cannot lead to a valid solution.</p>
+            
+            <h3>Pseudocode:</h3>
+            <div class="algorithm-box">
+function SubsetSum(set, target, index, currentSum, currentSubset):
+    # Base cases
+    if currentSum == target:
+        print currentSubset as a solution
+        return
+    
+    if index >= length(set) or currentSum > target:
+        return  # Backtrack
+    
+    # Include current element
+    if currentSum + set[index] <= target:
+        currentSubset.add(set[index])
+        SubsetSum(set, target, index+1, currentSum + set[index], currentSubset)
+        currentSubset.remove(set[index])  # Backtrack
+    
+    # Exclude current element
+    SubsetSum(set, target, index+1, currentSum, currentSubset)</div>
+            
+            <h3>State Space Tree:</h3>
+            <p>The algorithm explores a binary tree where each level represents a decision to include or exclude an element from the set:</p>
+            <ul>
+                <li>Left child: Include the current element</li>
+                <li>Right child: Exclude the current element</li>
+            </ul>
+            <p>The simulator in this virtual lab visualizes this state space tree.</p>
+        </div>
+
+        <div class="guide-section">
+            <h2>3. Time and Space Complexity</h2>
+            
+            <div class="table-container">
+                <table class="complexity-table">
+                    <tr>
+                        <th>Complexity</th>
+                        <th>Value</th>
+                        <th>Explanation</th>
+                    </tr>
+                    <tr>
+                        <td>Time Complexity</td>
+                        <td>O(2ⁿ)</td>
+                        <td>In the worst case, we need to explore all possible subsets of the input set, which is 2ⁿ for a set of n elements.</td>
+                    </tr>
+                    <tr>
+                        <td>Space Complexity</td>
+                        <td>O(n)</td>
+                        <td>The maximum depth of the recursion stack is n (the size of the input set).</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <h3>Optimization Techniques:</h3>
+            <ul>
+                <li><strong>Branch and Bound:</strong> Skip branches that cannot lead to a solution</li>
+                <li><strong>Sorting:</strong> Sorting the input set can help improve pruning efficiency</li>
+                <li><strong>Dynamic Programming:</strong> For large datasets, a dynamic programming approach may be more efficient</li>
+            </ul>
+        </div>
+
+        <div class="guide-section">
+            <h2>4. Applications</h2>
+            <p>The Sum of Subsets problem has various practical applications:</p>
+            <ul>
+                <li><strong>Resource Allocation:</strong> Allocating resources to meet specific requirements</li>
+                <li><strong>Financial Portfolio Management:</strong> Selecting investments to achieve target returns</li>
+                <li><strong>Load Balancing:</strong> Distributing tasks across systems with target workloads</li>
+                <li><strong>Cryptography:</strong> Some cryptographic protocols rely on the difficulty of solving subset sum problems</li>
+            </ul>
+        </div>
+
+        <div class="guide-section">
+            <h2>5. How to Use the Simulator</h2>
+            <ol>
+                <li>Navigate to the "Simulator" tab</li>
+                <li>Enter a set of integers separated by commas (e.g., "3, 4, 5")</li>
+                <li>Enter the target sum (e.g., "9")</li>
+                <li>Click "Reset" to initialize the visualization</li>
+                <li>Use "Next Step" to move forward in the algorithm execution</li>
+                <li>Use "Previous Step" to go back</li>
+                <li>Use "Auto Play" to automatically step through the algorithm</li>
+                <li>Adjust the speed using the speed control</li>
+            </ol>
+            
+            <div class="info-box">
+                <strong>Color Guide:</strong>
+                <ul>
+                    <li><span style="color: #78e573;">Green</span> - Current node being processed</li>
+                    <li><span style="color: #ffcc66;">Orange</span> - Backtracking</li>
+                    <li><span style="color: #f88;">Red</span> - Solution found</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simulator Page -->
+    <div id="simulatorPage" class="page">
+        <header>
+            <h1>Interactive Sum of Subsets Visualizer</h1>
+        </header>
+
+        <div class="input-area">
+            <label>Set: <input type="text" id="setInput" value="3, 4, 5" /></label>
+            <label>Target: <input type="number" id="targetInput" value="9" min="1" /></label>
+            <button id="resetBtn">Reset</button>
+        </div>
+
+        <div class="control-buttons">
+            <button id="nextBtn">Next Step</button>
+            <button id="prevBtn" disabled>Previous Step</button>
+            <button id="playPauseBtn">Auto Play</button>
+        </div>
+
+        <div class="auto-play">
+            <label>Speed: <input type="number" id="speedInput" value="500" min="100" max="2000" step="100" /> ms</label>
+        </div>
+
+        <div id="statusMessage" class="status"></div>
+
+        <div id="treeContainer">
+            <div id="treeCanvas"></div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #78e573; border: 1px solid #46a341;"></div>
+                <span>Current Node</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #ffcc66; border: 1px solid #e6a029;"></div>
+                <span>Backtracking</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #f88; border: 1px solid #e46464;"></div>
+                <span>Solution</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Page -->
+    <div id="quizPage" class="page">
+        <h1>Sum of Subsets Knowledge Quiz</h1>
+        
+        <div class="quiz-container">
+            <div class="quiz-progress">Question <span id="currentQuestion">1</span> of <span id="totalQuestions">5</span></div>
+            
+            <div id="quizContent">
+                <!-- Questions will be inserted here by JavaScript -->
+            </div>
+            
+            <button id="submitQuiz" class="quiz-submit">Submit Quiz</button>
+            
+            <div id="quizResults"></div>
+        </div>
+    </div>
+
+    <script>
+        // Navigation between pages
+        document.addEventListener('DOMContentLoaded', function () {
+            const navItems = document.querySelectorAll('.nav-item');
+            const pages = document.querySelectorAll('.page');
+            
+            navItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const pageId = this.getAttribute('data-page') + 'Page';
+                    
+                    // Hide all pages and remove active class from nav items
+                    pages.forEach(page => page.classList.remove('active'));
+                    navItems.forEach(navItem => navItem.classList.remove('active'));
+                    
+                    // Show selected page and set active class on nav item
+                    document.getElementById(pageId).classList.add('active');
+                    this.classList.add('active');
+                });
+            });
+            
+            // Simulator code
+            let currentStep = -1;
+            let steps = [];
+            let nodeMap = {};
+            let pathMap = {};
+            let edgeMap = {};
+            let isPlaying = false;
+            let playIntervalId = null;
+            let animationSpeed = 500;
+
+            // DOM elements
+            const nextBtn = document.getElementById('nextBtn');
+            const prevBtn = document.getElementById('prevBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            const speedInput = document.getElementById('speedInput');
+            const statusMessage = document.getElementById('statusMessage');
+
+            // Event listeners
+            nextBtn.addEventListener('click', nextStep);
+            prevBtn.addEventListener('click', prevStep);
+            resetBtn.addEventListener('click', resetVisualization);
+            playPauseBtn.addEventListener('click', toggleAutoPlay);
+            speedInput.addEventListener('change', updateSpeed);
+
+            // Initialize
+            resetVisualization();
+
+            function updateSpeed() {
+                animationSpeed = parseInt(speedInput.value);
+                if (isPlaying) {
+                    clearInterval(playIntervalId);
+                    playIntervalId = setInterval(nextStep, animationSpeed);
+                }
+            }
+
+            function toggleAutoPlay() {
+                isPlaying = !isPlaying;
+                if (isPlaying) {
+                    playPauseBtn.textContent = "Pause";
+                    playIntervalId = setInterval(nextStep, animationSpeed);
+                } else {
+                    playPauseBtn.textContent = "Auto Play";
+                    clearInterval(playIntervalId);
+                }
+            }
+
+            function showStatus(message) {
+                statusMessage.textContent = message;
+            }
+
+            function resetVisualization() {
+                if (isPlaying) {
+                    toggleAutoPlay();
+                }
+
+                const setInput = document.getElementById('setInput').value;
+                const targetInput = document.getElementById('targetInput').value;
+
+                const set = setInput.split(',')
+                    .map(x => parseInt(x.trim()))
+                    .filter(n => !isNaN(n));
+
+                const target = parseInt(targetInput);
+
+                if (set.length === 0 || isNaN(target)) {
+                    showStatus("Please enter valid numbers and target.");
+                    return;
+                }
+                showStatus(`Ready to start. Set: [${set.join(', ')}], Target: ${target}`);
+
+                currentStep = -1;
+                steps = [];
+                nodeMap = {};
+                pathMap = {};
+                edgeMap = {};
+
+                const canvas = document.getElementById('treeCanvas');
+                canvas.innerHTML = '';
+
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('width', '100%');
+                svg.setAttribute('height', '100%');
+                svg.style.position = 'absolute';
+                svg.style.top = '0';
+                svg.style.left = '0';
+                svg.style.zIndex = '5';
+                svg.id = 'pathSvg';
+                canvas.appendChild(svg);
+
+                const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+                marker.setAttribute('id', 'arrowhead');
+                marker.setAttribute('markerWidth', '6');
+                marker.setAttribute('markerHeight', '4');
+                marker.setAttribute('refX', '6');
+                marker.setAttribute('refY', '2');
+                marker.setAttribute('orient', 'auto');
+
+                const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                polygon.setAttribute('points', '0 0, 6 2, 0 4');
+                polygon.setAttribute('fill', '#666');
+
+                marker.appendChild(polygon);
+                defs.appendChild(marker);
+                svg.appendChild(defs);
+
+                generateSteps(set, target);
+                buildCompleteTree(set, target);
+                updateButtonState();
+
+                const container = document.getElementById('treeContainer');
+                container.scrollLeft = (parseInt(canvas.style.width) - container.clientWidth) / 2;
+            }
+
+            function buildCompleteTree(set, target) {
+                const canvas = document.getElementById('treeCanvas');
+
+                const treeDepth = set.length + 1;
+                const levelHeight = 80;
+                const maxNodesInLevel = Math.pow(2, set.length);
+                const nodeSpacing = 60;
+
+                const canvasWidth = Math.max(800, nodeSpacing * maxNodesInLevel);
+                const canvasHeight = levelHeight * treeDepth + 50;
+
+                canvas.style.width = canvasWidth + 'px';
+                canvas.style.height = canvasHeight + 'px';
+
+                function buildNode(index, subset, sum, level, position) {
+                    const horizontalSpacing = canvasWidth / Math.pow(2, level + 1);
+                    const x = horizontalSpacing + position * horizontalSpacing * 2;
+                    const y = 40 + level * levelHeight;
+
+                    const node = document.createElement('div');
+                    node.className = 'node';
+                    if (sum === target) {
+                        node.classList.add('highlight');
+                    }
+
+                    const nodeId = `node-${level}-${position}`;
+                    nodeMap[nodeId] = node;
+
+                    const sumDiv = document.createElement('div');
+                    sumDiv.className = 'node-sum';
+                    sumDiv.textContent = sum;
+
+                    const subsetDiv = document.createElement('div');
+                    subsetDiv.className = 'node-subset';
+                    if (subset.length > 0) {
+                        subsetDiv.textContent = `{${subset.join(', ')}}`;
+                    } else {
+                        subsetDiv.textContent = "{ }";
+                    }
+
+                    node.appendChild(sumDiv);
+                    node.appendChild(subsetDiv);
+
+                    node.style.left = `${x}px`;
+                    node.style.top = `${y}px`;
+                    node.style.opacity = '0.2';
+                    canvas.appendChild(node);
+
+                    if (level > 0) {
+                        const parentPosition = Math.floor(position / 2);
+                        const parentId = `node-${level - 1}-${parentPosition}`;
+                        const isLeftChild = position % 2 === 0;
+
+                        const svg = document.getElementById('pathSvg');
+                        const parentX = parseFloat(nodeMap[parentId].style.left);
+                        const parentY = parseFloat(nodeMap[parentId].style.top);
+
+                        const pathId = `path-${level}-${position}`;
+                        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+
+                        const startX = parentX;
+                        const startY = parentY + 20;
+                        const endX = x;
+                        const endY = y - 20;
+
+                        const pathData = `M ${startX} ${startY} 
+                     Q ${(startX + endX) / 2} ${startY + (endY - startY) / 3}, 
+                       ${endX} ${endY}`;
+
+                        path.setAttribute('d', pathData);
+                        path.setAttribute('stroke', '#ccc');
+                        path.setAttribute('stroke-width', '1.5');
+                        path.setAttribute('fill', 'none');
+                        path.setAttribute('marker-end', 'url(#arrowhead)');
+                        path.style.opacity = '0.2';
+                        path.id = pathId;
+                        svg.appendChild(path);
+                        pathMap[pathId] = path;
+
+                        const edgeId = `edge-${level}-${position}`;
+                        const edgeLabel = document.createElement('div');
+                        edgeLabel.className = 'edge-label';
+
+                        const elementIndex = level - 1;
+                        edgeLabel.textContent = isLeftChild ?
+                            `Inc ${set[elementIndex]}` :
+                            `Exc ${set[elementIndex]}`;
+
+                        const labelX = (startX + endX) / 2;
+                        const labelY = startY + (endY - startY) / 4;
+                        edgeLabel.style.left = `${labelX}px`;
+                        edgeLabel.style.top = `${labelY}px`;
+                        edgeLabel.style.opacity = '0';
+                        canvas.appendChild(edgeLabel);
+                        edgeMap[edgeId] = edgeLabel;
+                    }
+
+                    return { x, y, nodeId };
+                }
+
+                const queue = [{ index: 0, subset: [], sum: 0, level: 0, position: 0 }];
+
+                while (queue.length > 0) {
+                    const current = queue.shift();
+                    const { index, subset, sum, level, position } = current;
+
+                    buildNode(index, subset, sum, level, position);
+
+                    if (index < set.length) {
+                        queue.push({
+                            index: index + 1,
+                            subset: [...subset, set[index]],
+                            sum: sum + set[index],
+                            level: level + 1,
+                            position: position * 2
+                        });
+
+                        queue.push({
+                            index: index + 1,
+                            subset: [...subset],
+                            sum: sum,
+                            level: level + 1,
+                            position: position * 2 + 1
+                        });
+                    }
+                }
+            }
+
+            function generateSteps(set, target) {
+                steps = [];
+                function simulateBacktracking(index, currentSubset, currentSum, path) {
+                    const currentPath = [...path];
+                    const level = path.length;
+                    const position = calculatePosition(path);
+
+                    steps.push({
+                        type: 'visit',
+                        nodeId: `node-${level}-${position}`,
+                        pathId: level > 0 ? `path-${level}-${position}` : null,
+                        edgeId: level > 0 ? `edge-${level}-${position}` : null,
+                        message: `Visiting node Sum=${currentSum}, Subset={${currentSubset.join(', ')}}` +
+                            (currentSubset.length === 0 ? " (empty set)" : "")
+                    });
+
+                    if (currentSum === target) {
+                        steps.push({
+                            type: 'solution',
+                            nodeId: `node-${level}-${position}`,
+                            message: `Found solution! Sum=${currentSum}, Subset={${currentSubset.join(', ')}}`
+                        });
+                    }
+
+                    if (index >= set.length || currentSum > target) {
+                        steps.push({
+                            type: 'backtrack',
+                            nodeId: `node-${level}-${position}`,
+                            message: `Backtracking (pruned) from Sum=${currentSum}, Subset={${currentSubset.join(', ')}}` +
+                                (currentSubset.length === 0 ? " (empty set)" : "")
+                        });
+                        return;
+                    }
+
+                    if (currentSum + set[index] <= target) {
+                        path.push(0);
+                        simulateBacktracking(
+                            index + 1,
+                            [...currentSubset, set[index]],
+                            currentSum + set[index],
+                            path
+                        );
+                        path.pop();
+                    } else {
+                        steps.push({
+                            type: 'backtrack',
+                            nodeId: `node-${level}-${position}`,
+                            message: `Pruned inclusion of ${set[index]} (sum would be ${currentSum + set[index]} > target ${target})`
+                        });
+                    }
+
+                    path.push(1);
+                    simulateBacktracking(
+                        index + 1,
+                        [...currentSubset],
+                        currentSum,
+                        path
+                    );
+                    path.pop();
+
+                    steps.push({
+                        type: 'backtrack',
+                        nodeId: `node-${level}-${position}`,
+                        parentPath: level > 0 ? currentPath.slice(0, -1) : [],
+                        // This continues from where the provided code was cut off
+                        message: `Backtracking from Sum=${currentSum}, Subset={${currentSubset.join(', ')}}` +
+                            (currentSubset.length === 0 ? " (empty set)" : "")
+                    });
+                }
+
+                function calculatePosition(path) {
+                    let position = 0;
+                    for (let i = 0; i < path.length; i++) {
+                        position = position * 2 + path[i];
+                    }
+                    return position;
+                }
+
+                simulateBacktracking(0, [], 0, []);
+            }
+
+            function nextStep() {
+                if (currentStep < steps.length - 1) {
+                    currentStep++;
+                    animateStep(steps[currentStep]);
+                    updateButtonState();
+
+                    if (currentStep === steps.length - 1 && isPlaying) {
+                        toggleAutoPlay(); // Stop playing when we reach the end
+                    }
+                }
+            }
+
+            function prevStep() {
+                if (currentStep > 0) {
+                    // Undo current step
+                    const currentStepData = steps[currentStep];
+                    undoStep(currentStepData);
+                    
+                    currentStep--;
+                    animateStep(steps[currentStep]);
+                    updateButtonState();
+                }
+            }
+
+            function undoStep(step) {
+                if (step.type === 'visit') {
+                    const node = nodeMap[step.nodeId];
+                    node.classList.remove('current');
+                    node.style.opacity = '0.2';
+                    
+                    if (step.pathId) {
+                        const path = pathMap[step.pathId];
+                        path.setAttribute('stroke', '#ccc');
+                        path.setAttribute('stroke-width', '1.5');
+                        path.style.opacity = '0.2';
+                        path.classList.remove('path');
+                        
+                        if (step.edgeId) {
+                            const edge = edgeMap[step.edgeId];
+                            edge.classList.remove('visible');
+                        }
+                    }
+                } else if (step.type === 'solution') {
+                    const node = nodeMap[step.nodeId];
+                    node.classList.remove('highlight');
+                } else if (step.type === 'backtrack') {
+                    const node = nodeMap[step.nodeId];
+                    node.classList.remove('backtrack');
+                    
+                    // If there's a parent path, remove backtrack styling from the path
+                    if (step.parentPath && step.parentPath.length > 0) {
+                        const level = step.parentPath.length;
+                        const position = calculatePosition(step.parentPath);
+                        const childLevel = level + 1;
+                        const childPosition = calculatePosition([...step.parentPath, step.parentPath[step.parentPath.length - 1] === 0 ? 1 : 0]);
+                        
+                        const pathId = `path-${childLevel}-${childPosition}`;
+                        const path = pathMap[pathId];
+                        if (path) {
+                            path.classList.remove('backtrack-path');
+                        }
+                    }
+                }
+            }
+
+            function animateStep(step) {
+    if (step.type === 'visit') {
+        const node = nodeMap[step.nodeId];
+        node.classList.add('current');
+        node.style.opacity = '1';
+        
+        if (step.pathId) {
+            const path = pathMap[step.pathId];
+            path.setAttribute('stroke', '#65a5f8');
+            path.setAttribute('stroke-width', '2.5');
+            path.style.opacity = '1';
+            path.classList.add('path');
+            
+            if (step.edgeId) {
+                const edge = edgeMap[step.edgeId];
+                edge.classList.add('visible');
+            }
+        }
+    } else if (step.type === 'solution') {
+        const node = nodeMap[step.nodeId];
+        node.classList.add('highlight');
+        node.classList.remove('current');
+    } else if (step.type === 'backtrack') {
+        const node = nodeMap[step.nodeId];
+
+        // ✅ Prevent overwriting solution highlight
+        if (!node.classList.contains('highlight')) {
+            node.classList.add('backtrack');
+        }
+
+        node.classList.remove('current');
+
+        // If there's a parent path, style the path as backtracking
+        if (step.parentPath && step.parentPath.length > 0) {
+            const level = step.parentPath.length;
+            const position = calculatePosition(step.parentPath);
+            const childLevel = level + 1;
+            const childPosition = calculatePosition([...step.parentPath, step.parentPath[step.parentPath.length - 1] === 0 ? 1 : 0]);
+
+            const pathId = `path-${childLevel}-${childPosition}`;
+            const path = pathMap[pathId];
+            if (path) {
+                path.classList.add('backtrack-path');
+                path.setAttribute('stroke', '#ffcc66');
+            }
+        }
+    }
+
+    showStatus(step.message);
+}
+
+
+            function updateButtonState() {
+                prevBtn.disabled = currentStep <= 0;
+                nextBtn.disabled = currentStep >= steps.length - 1;
+            }
+
+            function calculatePosition(path) {
+                let position = 0;
+                for (let i = 0; i < path.length; i++) {
+                    position = position * 2 + path[i];
+                }
+                return position;
+            }
+
+            // Quiz functionality
+            const questions = [
+                {
+                    question: "What is the primary technique used in the Sum of Subsets algorithm?",
+                    options: [
+                        "Dynamic Programming",
+                        "Greedy Algorithm",
+                        "Backtracking",
+                        "Divide and Conquer"
+                    ],
+                    correctAnswer: 2,
+                    explanation: "The Sum of Subsets algorithm primarily uses backtracking, which is a depth-first search approach that incrementally builds candidates to the solution and abandons them when they cannot lead to a valid solution."
+                },
+                {
+                    question: "What is the time complexity of the Sum of Subsets algorithm?",
+                    options: [
+                        "O(n)",
+                        "O(n log n)",
+                        "O(n²)",
+                        "O(2ⁿ)"
+                    ],
+                    correctAnswer: 3,
+                    explanation: "The time complexity is O(2ⁿ) because in the worst case, we need to explore all possible subsets of the input set, which is 2ⁿ for a set of n elements."
+                },
+                {
+                    question: "Which of the following is NOT an application of the Sum of Subsets problem?",
+                    options: [
+                        "Resource Allocation",
+                        "Sorting Algorithms",
+                        "Load Balancing",
+                        "Financial Portfolio Management"
+                    ],
+                    correctAnswer: 1,
+                    explanation: "Sorting algorithms are not an application of the Sum of Subsets problem. The Sum of Subsets problem is used in resource allocation, load balancing, and financial portfolio management among other applications."
+                },
+                {
+                    question: "Which optimization technique is NOT typically used with the Sum of Subsets algorithm?",
+                    options: [
+                        "Branch and Bound",
+                        "Sorting the input set",
+                        "Hash-based memoization",
+                        "Dynamic Programming for large datasets"
+                    ],
+                    correctAnswer: 2,
+                    explanation: "While hash-based memoization can be used in some subset sum problems, it's not a typical optimization for the classic Sum of Subsets backtracking algorithm. Branch and bound, sorting, and dynamic programming are common optimization techniques."
+                },
+                {
+                    question: "In the state space tree for the Sum of Subsets problem, what does each level represent?",
+                    options: [
+                        "Current sum value",
+                        "A possible solution",
+                        "Decision to include or exclude an element",
+                        "Target sum value"
+                    ],
+                    correctAnswer: 2,
+                    explanation: "In the state space tree, each level represents a decision to include or exclude a specific element from the original set."
+                }
+            ];
+
+            let currentQuestionIndex = 0;
+            let userAnswers = Array(questions.length).fill(-1);
+
+            function loadQuiz() {
+                const quizContent = document.getElementById('quizContent');
+                const currentQuestionElement = document.getElementById('currentQuestion');
+                const totalQuestionsElement = document.getElementById('totalQuestions');
+                const submitBtn = document.getElementById('submitQuiz');
+
+                totalQuestionsElement.textContent = questions.length;
+                
+                function renderCurrentQuestion() {
+                    currentQuestionElement.textContent = currentQuestionIndex + 1;
+                    
+                    const question = questions[currentQuestionIndex];
+                    
+                    let html = `
+                        <div class="quiz-question">
+                            <h3>${currentQuestionIndex + 1}. ${question.question}</h3>
+                            <div class="quiz-options">
+                    `;
+                    
+                    question.options.forEach((option, index) => {
+                        const checked = userAnswers[currentQuestionIndex] === index ? 'checked' : '';
+                        html += `
+                            <div class="quiz-option">
+                                <input type="radio" name="q${currentQuestionIndex}" id="q${currentQuestionIndex}o${index}" value="${index}" ${checked}>
+                                <label for="q${currentQuestionIndex}o${index}">${option}</label>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `
+                            </div>
+                            <div class="answer-explanation" id="explanation${currentQuestionIndex}">
+                                ${question.explanation}
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                            <button id="prevQuestion" ${currentQuestionIndex === 0 ? 'disabled' : ''}>Previous Question</button>
+                            <button id="nextQuestion" ${currentQuestionIndex === questions.length - 1 ? 'disabled' : ''}>Next Question</button>
+                        </div>
+                    `;
+                    
+                    quizContent.innerHTML = html;
+                    
+                    // Add event listeners for next and previous buttons
+                    document.getElementById('nextQuestion').addEventListener('click', () => {
+                        saveCurrentAnswer();
+                        currentQuestionIndex++;
+                        renderCurrentQuestion();
+                    });
+                    
+                    document.getElementById('prevQuestion').addEventListener('click', () => {
+                        saveCurrentAnswer();
+                        currentQuestionIndex--;
+                        renderCurrentQuestion();
+                    });
+                    
+                    // Add event listeners for radio buttons
+                    const radioButtons = document.querySelectorAll(`input[name="q${currentQuestionIndex}"]`);
+                    radioButtons.forEach(radio => {
+                        radio.addEventListener('change', () => {
+                            userAnswers[currentQuestionIndex] = parseInt(radio.value);
+                        });
+                    });
+                }
+                
+                function saveCurrentAnswer() {
+                    const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+                    if (selectedOption) {
+                        userAnswers[currentQuestionIndex] = parseInt(selectedOption.value);
+                    }
+                }
+                
+                submitBtn.addEventListener('click', () => {
+                    saveCurrentAnswer();
+                    
+                    // Calculate score
+                    let score = 0;
+                    userAnswers.forEach((answer, index) => {
+                        if (answer === questions[index].correctAnswer) {
+                            score++;
+                        }
+                    });
+                    
+                    // Show results
+                    const resultsDiv = document.getElementById('quizResults');
+                    resultsDiv.style.display = 'block';
+                    resultsDiv.innerHTML = `<h3>Your Score: ${score}/${questions.length}</h3>`;
+                    
+                    // Show answers
+                    questions.forEach((question, qIndex) => {
+                        const userAnswer = userAnswers[qIndex];
+                        const correctAnswer = question.correctAnswer;
+                        
+                        resultsDiv.innerHTML += `
+                            <div style="margin-top: 10px; padding: 10px; background-color: ${userAnswer === correctAnswer ? '#d5f5e3' : '#fadbd8'}; border-radius: 5px;">
+                                <strong>Question ${qIndex + 1}:</strong> ${question.question}<br>
+                                <strong>Your answer:</strong> ${userAnswer >= 0 ? question.options[userAnswer] : 'Not answered'}<br>
+                                <strong>Correct answer:</strong> ${question.options[correctAnswer]}<br>
+                                <strong>Explanation:</strong> ${question.explanation}
+                            </div>
+                        `;
+                    });
+                    
+                    // Hide submit button
+                    submitBtn.style.display = 'none';
+                });
+                
+                renderCurrentQuestion();
+            }
+
+            // Initialize quiz when quiz page is loaded
+            document.querySelector('.nav-item[data-page="quiz"]').addEventListener('click', loadQuiz);
+        });
+    </script>
+</body>
+</html>
